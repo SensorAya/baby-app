@@ -77,10 +77,16 @@ export function LoginScreen() {
                   }
                 })}
               >
-                <OutlinedTextField.Label>永久 Token</OutlinedTextField.Label>
-                <OutlinedTextField.Placeholder>user_••••••••</OutlinedTextField.Placeholder>
+                <OutlinedTextField.Label>
+                  <Text>永久 Token</Text>
+                </OutlinedTextField.Label>
+                <OutlinedTextField.Placeholder>
+                  <Text>user_••••••••</Text>
+                </OutlinedTextField.Placeholder>
                 {error ? (
-                  <OutlinedTextField.SupportingText>{error}</OutlinedTextField.SupportingText>
+                  <OutlinedTextField.SupportingText>
+                    <Text>{error}</Text>
+                  </OutlinedTextField.SupportingText>
                 ) : null}
               </OutlinedTextField>
               <Button
@@ -88,7 +94,7 @@ export function LoginScreen() {
                 enabled={!isBusy && token.trim().length > 0}
                 modifiers={[fillMaxWidth()]}
               >
-                {isBusy ? "正在验证…" : "安全登录"}
+                <Text>{isBusy ? "正在验证…" : "安全登录"}</Text>
               </Button>
             </Column>
           </Card>

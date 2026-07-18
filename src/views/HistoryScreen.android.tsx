@@ -76,7 +76,9 @@ export function HistoryScreen() {
               <Text style={{ typography: "headlineMedium", fontWeight: "700" }}>
                 监测历史
               </Text>
-              <TextButton onClick={() => void signOut()}>退出登录</TextButton>
+              <TextButton onClick={() => void signOut()}>
+                <Text>退出登录</Text>
+              </TextButton>
             </Row>
             <Text style={{ typography: "bodyMedium" }}>
               {viewModel.total > 0
@@ -103,7 +105,9 @@ export function HistoryScreen() {
               <Text style={{ typography: "titleMedium", textAlign: "center" }}>
                 {viewModel.error}
               </Text>
-              <Button onClick={() => void viewModel.retry()}>重新加载</Button>
+              <Button onClick={() => void viewModel.retry()}>
+                <Text>重新加载</Text>
+              </Button>
             </Column>
           ) : viewModel.records.length === 0 ? (
             <Column
@@ -136,7 +140,7 @@ export function HistoryScreen() {
                     onClick={() => void viewModel.loadMore()}
                     modifiers={[fillMaxWidth()]}
                   >
-                    {viewModel.isLoadingMore ? "正在加载…" : "加载更多"}
+                    <Text>{viewModel.isLoadingMore ? "正在加载…" : "加载更多"}</Text>
                   </FilledTonalButton>
                 ) : null}
               </LazyColumn>
