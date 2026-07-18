@@ -53,28 +53,10 @@
             zlib
           ];
 
-          babyEmulator = pkgs.writeShellApplication {
-            name = "baby-emulator";
-            runtimeInputs = [ pkgs.coreutils ];
-            text = ''
-              android_home="''${ANDROID_HOME:-$HOME/Android/Sdk}"
-              avd_name="''${ANDROID_AVD_NAME:-SensorAya_API_36}"
-              emulator="$android_home/emulator/emulator"
-
-              if [[ ! -x "$emulator" ]]; then
-                echo "Android emulator not found at $emulator" >&2
-                echo "Install it with IntelliJ IDEA's Android SDK Manager first." >&2
-                exit 1
-              fi
-
-              exec "$emulator" "@$avd_name" "$@"
-            '';
-          };
         in
         {
           default = pkgs.mkShell {
             packages = with pkgs; [
-              babyEmulator
               cmake
               git
               jdk21
