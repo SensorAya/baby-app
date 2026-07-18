@@ -3,6 +3,9 @@ node_modules/
 dist/
 artifacts/
 web-build/
+.direnv/
+.envrc
+.idea/
 .env
 .env.*
 !.env.example
