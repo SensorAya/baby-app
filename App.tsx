@@ -10,13 +10,19 @@ import { LoadingScreen } from "./src/views/LoadingScreen.android";
 import { LoginScreen } from "./src/views/LoginScreen.android";
 
 function AppContent() {
-  const { status } = useAuthViewModel();
+  const { status, error, retryRestore, signOut } = useAuthViewModel();
 
   return (
     <SafeAreaView style={{ flex: 1 }} edges={["top", "bottom"]}>
       <StatusBar style="auto" />
       {status === "restoring" ? (
         <LoadingScreen />
+      ) : status === "restoreFailed" ? (
+        <LoadingScreen
+          error={error}
+          onRetry={() => void retryRestore()}
+          onUseAnotherToken={() => void signOut()}
+        />
       ) : status === "signedIn" ? (
         <AppShell />
       ) : (

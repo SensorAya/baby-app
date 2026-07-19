@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type PropsWithChildren
 } from "react";
@@ -12,7 +13,12 @@ import type { User } from "../models/types";
 import { api, ApiError } from "../services/api";
 import { tokenStorage } from "../services/tokenStorage";
 
-type AuthStatus = "restoring" | "signedOut" | "verifying" | "signedIn";
+type AuthStatus =
+  | "restoring"
+  | "restoreFailed"
+  | "signedOut"
+  | "verifying"
+  | "signedIn";
 
 type AuthViewModel = {
   status: AuthStatus;
@@ -21,6 +27,7 @@ type AuthViewModel = {
   error: string | null;
   signIn: (token: string) => Promise<boolean>;
   signOut: () => Promise<void>;
+  retryRestore: () => Promise<void>;
   clearError: () => void;
 };
 
@@ -38,44 +45,83 @@ export function AuthViewModelProvider({ children }: PropsWithChildren) {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const requestId = useRef(0);
 
   const clearSession = useCallback(async () => {
-    await tokenStorage.clear();
+    requestId.current += 1;
+    let clearError: string | null = null;
+    try {
+      await tokenStorage.clear();
+    } catch {
+      clearError = "无法清除本机凭证，请稍后重试或在系统设置中清除应用数据";
+    }
     setToken(null);
     setUser(null);
+    setError(clearError);
     setStatus("signedOut");
   }, []);
 
-  useEffect(() => {
-    let active = true;
+  const restoreSession = useCallback(async () => {
+    const currentRequest = ++requestId.current;
+    setStatus("restoring");
+    setError(null);
 
-    void (async () => {
-      const savedToken = await tokenStorage.get();
-      if (!active) return;
-      if (!savedToken) {
+    let savedToken: string | null;
+    try {
+      savedToken = await tokenStorage.get();
+    } catch {
+      if (currentRequest !== requestId.current) return;
+      setToken(null);
+      setUser(null);
+      setError("无法读取本机保存的 Token，请解锁设备后重试");
+      setStatus("restoreFailed");
+      return;
+    }
+
+    if (currentRequest !== requestId.current) return;
+    if (!savedToken) {
+      setToken(null);
+      setUser(null);
+      setStatus("signedOut");
+      return;
+    }
+
+    setToken(savedToken);
+    setUser(null);
+    try {
+      const verified = await api.verifyToken(savedToken);
+      if (currentRequest !== requestId.current) return;
+      setUser(verified.user);
+      setStatus("signedIn");
+    } catch (restoreError) {
+      if (currentRequest !== requestId.current) return;
+      if (restoreError instanceof ApiError && restoreError.status === 401) {
+        let storageError: string | null = null;
+        try {
+          await tokenStorage.clear();
+        } catch {
+          storageError = "Token 已失效，但本机凭证清除失败；可输入新 Token 覆盖";
+        }
+        if (currentRequest !== requestId.current) return;
+        setToken(null);
+        setUser(null);
+        setError(storageError);
         setStatus("signedOut");
         return;
       }
 
-      try {
-        const verified = await api.verifyToken(savedToken);
-        if (!active) return;
-        setToken(savedToken);
-        setUser(verified.user);
-        setStatus("signedIn");
-      } catch (restoreError) {
-        if (!active) return;
-        await clearSession();
-        if (!(restoreError instanceof ApiError && restoreError.status === 401)) {
-          setError(getLoginError(restoreError));
-        }
-      }
-    })();
+      setError(getLoginError(restoreError));
+      setStatus("restoreFailed");
+    }
+  }, []);
+
+  useEffect(() => {
+    void restoreSession();
 
     return () => {
-      active = false;
+      requestId.current += 1;
     };
-  }, [clearSession]);
+  }, [restoreSession]);
 
   const signIn = useCallback(async (rawToken: string) => {
     const nextToken = rawToken.trim();
@@ -86,14 +132,18 @@ export function AuthViewModelProvider({ children }: PropsWithChildren) {
 
     setError(null);
     setStatus("verifying");
+    const currentRequest = ++requestId.current;
     try {
       const verified = await api.verifyToken(nextToken);
+      if (currentRequest !== requestId.current) return false;
       await tokenStorage.set(nextToken);
+      if (currentRequest !== requestId.current) return false;
       setToken(nextToken);
       setUser(verified.user);
       setStatus("signedIn");
       return true;
     } catch (loginError) {
+      if (currentRequest !== requestId.current) return false;
       setStatus("signedOut");
       setError(getLoginError(loginError));
       return false;
@@ -108,9 +158,10 @@ export function AuthViewModelProvider({ children }: PropsWithChildren) {
       error,
       signIn,
       signOut: clearSession,
+      retryRestore: restoreSession,
       clearError: () => setError(null)
     }),
-    [clearSession, error, signIn, status, token, user]
+    [clearSession, error, restoreSession, signIn, status, token, user]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
