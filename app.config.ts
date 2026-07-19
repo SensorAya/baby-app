@@ -13,15 +13,22 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   version: "1.0.0",
   orientation: "portrait",
   userInterfaceStyle: "automatic",
+  icon: "./assets/icon.png",
   android: {
     package: "com.sensoraya.baby",
-    predictiveBackGestureEnabled: true
+    predictiveBackGestureEnabled: true,
+    adaptiveIcon: {
+      foregroundImage: "./assets/adaptive-icon.png",
+      monochromeImage: "./assets/adaptive-icon.png",
+      backgroundColor: "#6750A4"
+    }
   },
   extra: {
     apiUrl: normalizeApiUrl(process.env.URL)
   },
   plugins: [
     "expo-secure-store",
+    ["expo-navigation-bar", { enforceContrast: false }],
     [
       "expo-build-properties",
       {

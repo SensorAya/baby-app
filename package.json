@@ -5,7 +5,7 @@
   "main": "index.ts",
   "scripts": {
     "start": "expo start",
-    "android": "expo run:android",
+    "android": "EXPO_UNSTABLE_HEADLESS=1 expo run:android --port 8081",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "verify:backend": "node --env-file=.env scripts/verify-backend.mjs"
@@ -15,6 +15,7 @@
     "expo": "~57.0.7",
     "expo-build-properties": "~57.0.6",
     "expo-constants": "~57.0.1",
+    "expo-navigation-bar": "~57.0.2",
     "expo-secure-store": "~57.0.1",
     "expo-status-bar": "~57.0.1",
     "expo-system-ui": "~57.0.1",

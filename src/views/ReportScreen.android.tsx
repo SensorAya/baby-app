@@ -5,31 +5,40 @@ import {
   Column,
   FilledTonalButton,
   Host,
+  Icon,
   SegmentedButton,
   SingleChoiceSegmentedButtonRow,
   Surface,
   Text
 } from "@expo/ui/jetpack-compose";
 import {
+  fillMaxSize,
   fillMaxWidth,
   padding,
   paddingAll
 } from "@expo/ui/jetpack-compose/modifiers";
 
-import { BRAND_SEED, formatDateRange } from "../ui/theme";
+import { formatDateRange } from "../ui/theme";
 import { ReportMarkdown } from "../ui/ReportMarkdown";
+import { useSettingsViewModel } from "../viewmodels/SettingsViewModel";
 import { useReportViewModel } from "../viewmodels/useReportViewModel";
 
 export function ReportScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
   const viewModel = useReportViewModel();
+  const { accentSeed } = useSettingsViewModel();
 
   return (
     <View
       style={[styles.root, { backgroundColor: isDark ? "#141218" : "#FFFBFE" }]}
     >
-      <Host matchContents seedColor={BRAND_SEED} colorScheme={colorScheme}>
+      <Host
+        matchContents={{ vertical: true }}
+        style={styles.fullWidth}
+        seedColor={accentSeed}
+        colorScheme={colorScheme}
+      >
         <Surface modifiers={[fillMaxWidth()]}>
           <Column
             modifiers={[padding(20, 20, 20, 16)]}
@@ -119,16 +128,29 @@ export function ReportScreen() {
           <ReportMarkdown markdown={viewModel.report.report} isDark={isDark} />
         </ScrollView>
       ) : (
-        <View style={styles.placeholder}>
-          <Host matchContents seedColor={BRAND_SEED} colorScheme={colorScheme}>
-            <Column horizontalAlignment="center" modifiers={[paddingAll(24)]}>
+        <Host
+          style={styles.placeholderHost}
+          seedColor={accentSeed}
+          colorScheme={colorScheme}
+        >
+          <Surface modifiers={[fillMaxSize()]}>
+            <Column
+              horizontalAlignment="center"
+              verticalArrangement="center"
+              modifiers={[fillMaxSize(), paddingAll(24)]}
+            >
+              <Icon
+                source={require("../assets/insights.xml")}
+                size={48}
+                contentDescription="智能报告"
+              />
               <Text style={{ typography: "headlineSmall" }}>选择报告周期</Text>
               <Text style={{ typography: "bodyMedium", textAlign: "center" }}>
                 报告会先评估数据质量，再分析可见度、报警与画面稳定性。
               </Text>
             </Column>
-          </Host>
-        </View>
+          </Surface>
+        </Host>
       )}
     </View>
   );
@@ -136,6 +158,7 @@ export function ReportScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
+  fullWidth: { width: "100%" },
+  placeholderHost: { flex: 1, width: "100%" },
   report: { paddingHorizontal: 20, paddingBottom: 32 },
-  placeholder: { flex: 1, alignItems: "center", justifyContent: "center" }
 });

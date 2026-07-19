@@ -4,12 +4,15 @@ import {
   Card,
   CircularWavyProgressIndicator,
   Column,
+  FilledTonalIconButton,
   FilledTonalButton,
   Host,
+  Icon,
   LazyColumn,
   LinearProgressIndicator,
   PullToRefreshBox,
   Row,
+  Spacer,
   Surface,
   Text,
   TextButton
@@ -18,23 +21,28 @@ import {
   fillMaxSize,
   fillMaxWidth,
   padding,
-  paddingAll
+  paddingAll,
+  weight
 } from "@expo/ui/jetpack-compose/modifiers";
 
 import type { MonitoringRecord } from "../models/types";
 import {
-  BRAND_SEED,
   formatRecordDay,
   formatRecordTime,
   getRecordDayKey
 } from "../ui/theme";
 import { useAuthViewModel } from "../viewmodels/AuthViewModel";
+import { useSettingsViewModel } from "../viewmodels/SettingsViewModel";
 import { useMonitoringHistoryViewModel } from "../viewmodels/useMonitoringHistoryViewModel";
 
 type RecordGroup = {
   key: string;
   label: string;
   records: MonitoringRecord[];
+};
+
+type HistoryScreenProps = {
+  onOpenSettings: () => void;
 };
 
 function groupRecords(records: MonitoringRecord[]): RecordGroup[] {
@@ -109,25 +117,31 @@ function RecordCard({
   );
 }
 
-export function HistoryScreen() {
+export function HistoryScreen({ onOpenSettings }: HistoryScreenProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
   const viewModel = useMonitoringHistoryViewModel();
-  const { user, signOut } = useAuthViewModel();
+  const { user } = useAuthViewModel();
+  const { accentSeed } = useSettingsViewModel();
   const recordGroups = groupRecords(viewModel.records);
 
   return (
-    <Host style={{ flex: 1 }} seedColor={BRAND_SEED} colorScheme={colorScheme}>
+    <Host style={{ flex: 1 }} seedColor={accentSeed} colorScheme={colorScheme}>
       <Surface modifiers={[fillMaxSize()]}>
         <Column modifiers={[fillMaxSize()]}>
-          <Column modifiers={[padding(20, 20, 20, 12)]}>
-            <Row horizontalArrangement="spaceBetween" verticalAlignment="center">
+          <Column modifiers={[fillMaxWidth(), padding(20, 20, 20, 12)]}>
+            <Row modifiers={[fillMaxWidth()]} verticalAlignment="center">
               <Text style={{ typography: "headlineMedium", fontWeight: "700" }}>
                 监测历史
               </Text>
-              <TextButton onClick={() => void signOut()}>
-                <Text>退出登录</Text>
-              </TextButton>
+              <Spacer modifiers={[weight(1)]} />
+              <FilledTonalIconButton onClick={onOpenSettings}>
+                <Icon
+                  source={require("../assets/settings.xml")}
+                  size={24}
+                  contentDescription="设置"
+                />
+              </FilledTonalIconButton>
             </Row>
             <Text style={{ typography: "bodyMedium" }}>
               {viewModel.total > 0
@@ -159,20 +173,34 @@ export function HistoryScreen() {
               </Button>
             </Column>
           ) : viewModel.records.length === 0 ? (
-            <Column
-              modifiers={[fillMaxSize(), paddingAll(24)]}
-              horizontalAlignment="center"
-              verticalArrangement="center"
+            <PullToRefreshBox
+              isRefreshing={viewModel.isRefreshing}
+              onRefresh={() => void viewModel.refresh()}
+              contentAlignment="topCenter"
+              modifiers={[fillMaxSize()]}
             >
-              <Text style={{ typography: "headlineSmall" }}>暂无监测记录</Text>
-              <Text style={{ typography: "bodyMedium", textAlign: "center" }}>
-                设备上传第一条数据后，在此下拉即可刷新。
-              </Text>
-            </Column>
+              <LazyColumn
+                modifiers={[fillMaxSize()]}
+                horizontalAlignment="center"
+                verticalArrangement="center"
+                contentPadding={{ start: 24, top: 24, end: 24, bottom: 24 }}
+              >
+                <Icon
+                  source={require("../assets/history.xml")}
+                  size={48}
+                  contentDescription="暂无监测记录"
+                />
+                <Text style={{ typography: "headlineSmall" }}>暂无监测记录</Text>
+                <Text style={{ typography: "bodyMedium", textAlign: "center" }}>
+                  设备上传第一条数据后，在此下拉即可刷新。
+                </Text>
+              </LazyColumn>
+            </PullToRefreshBox>
           ) : (
             <PullToRefreshBox
               isRefreshing={viewModel.isRefreshing}
               onRefresh={() => void viewModel.refresh()}
+              contentAlignment="topCenter"
               modifiers={[fillMaxSize()]}
             >
               <LazyColumn

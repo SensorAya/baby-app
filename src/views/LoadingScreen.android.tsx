@@ -14,7 +14,7 @@ import {
   paddingAll
 } from "@expo/ui/jetpack-compose/modifiers";
 
-import { BRAND_SEED } from "../ui/theme";
+import { useSettingsViewModel } from "../viewmodels/SettingsViewModel";
 
 type LoadingScreenProps = {
   error?: string | null;
@@ -28,10 +28,11 @@ export function LoadingScreen({
   onUseAnotherToken
 }: LoadingScreenProps) {
   const colorScheme = useColorScheme();
+  const { accentSeed } = useSettingsViewModel();
   const failed = Boolean(error);
 
   return (
-    <Host style={{ flex: 1 }} seedColor={BRAND_SEED} colorScheme={colorScheme}>
+    <Host style={{ flex: 1 }} seedColor={accentSeed} colorScheme={colorScheme}>
       <Surface modifiers={[fillMaxSize()]}>
         <Column
           modifiers={[fillMaxSize(), paddingAll(24)]}

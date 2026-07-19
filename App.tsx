@@ -1,20 +1,29 @@
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { useColorScheme } from "react-native";
 import { StatusBar } from "expo-status-bar";
+import { NavigationBar as SystemNavigationBar } from "expo-navigation-bar";
 
 import {
   AuthViewModelProvider,
   useAuthViewModel
 } from "./src/viewmodels/AuthViewModel";
+import { SettingsViewModelProvider } from "./src/viewmodels/SettingsViewModel";
 import { AppShell } from "./src/views/AppShell.android";
 import { LoadingScreen } from "./src/views/LoadingScreen.android";
 import { LoginScreen } from "./src/views/LoginScreen.android";
 
 function AppContent() {
   const { status, error, retryRestore, signOut } = useAuthViewModel();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
 
   return (
-    <SafeAreaView style={{ flex: 1 }} edges={["top", "bottom"]}>
-      <StatusBar style="auto" />
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: isDark ? "#141218" : "#FFFBFE" }}
+      edges={["top", "bottom"]}
+    >
+      <StatusBar style={isDark ? "light" : "dark"} animated />
+      <SystemNavigationBar style={isDark ? "dark" : "light"} />
       {status === "restoring" ? (
         <LoadingScreen />
       ) : status === "restoreFailed" ? (
@@ -35,9 +44,11 @@ function AppContent() {
 export default function App() {
   return (
     <SafeAreaProvider>
-      <AuthViewModelProvider>
-        <AppContent />
-      </AuthViewModelProvider>
+      <SettingsViewModelProvider>
+        <AuthViewModelProvider>
+          <AppContent />
+        </AuthViewModelProvider>
+      </SettingsViewModelProvider>
     </SafeAreaProvider>
   );
 }

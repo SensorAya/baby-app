@@ -1,4 +1,27 @@
-export const BRAND_SEED = "#6750A4";
+import type { AccentColorId } from "../services/themeStorage";
+
+export const ACCENT_COLORS: ReadonlyArray<{
+  id: AccentColorId;
+  label: string;
+  seed?: string;
+}> = [
+  { id: "system", label: "系统" },
+  { id: "red", label: "朱红", seed: "#B3261E" },
+  { id: "rose", label: "玫红", seed: "#984061" },
+  { id: "violet", label: "紫罗兰", seed: "#6750A4" },
+  { id: "indigo", label: "靛蓝", seed: "#3F51B5" },
+  { id: "blue", label: "海蓝", seed: "#0061A4" },
+  { id: "cyan", label: "青蓝", seed: "#006875" },
+  { id: "teal", label: "青绿", seed: "#006A60" },
+  { id: "green", label: "翠绿", seed: "#386A20" },
+  { id: "amber", label: "琥珀", seed: "#825500" },
+  { id: "orange", label: "橙色", seed: "#8B5000" },
+  { id: "slate", label: "岩灰", seed: "#545F71" }
+] as const;
+
+export function getAccentSeed(id: AccentColorId): string | undefined {
+  return ACCENT_COLORS.find((option) => option.id === id)?.seed;
+}
 
 const recordClockFormatter = new Intl.DateTimeFormat("zh-TW", {
   hour: "2-digit",
