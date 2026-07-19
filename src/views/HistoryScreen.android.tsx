@@ -7,6 +7,7 @@ import {
   FilledTonalButton,
   Host,
   LazyColumn,
+  LinearProgressIndicator,
   PullToRefreshBox,
   Row,
   Surface,
@@ -21,14 +22,56 @@ import {
 } from "@expo/ui/jetpack-compose/modifiers";
 
 import type { MonitoringRecord } from "../models/types";
-import { BRAND_SEED, formatRecordTime } from "../ui/theme";
+import {
+  BRAND_SEED,
+  formatRecordDay,
+  formatRecordTime,
+  getRecordDayKey
+} from "../ui/theme";
 import { useAuthViewModel } from "../viewmodels/AuthViewModel";
 import { useMonitoringHistoryViewModel } from "../viewmodels/useMonitoringHistoryViewModel";
 
-function RecordCard({ record }: { record: MonitoringRecord }) {
+type RecordGroup = {
+  key: string;
+  label: string;
+  records: MonitoringRecord[];
+};
+
+function groupRecords(records: MonitoringRecord[]): RecordGroup[] {
+  const groups: RecordGroup[] = [];
+  for (const record of records) {
+    const key = getRecordDayKey(record.timestamp);
+    const currentGroup = groups.at(-1);
+    if (currentGroup?.key === key) currentGroup.records.push(record);
+    else {
+      groups.push({
+        key,
+        label: formatRecordDay(record.timestamp),
+        records: [record]
+      });
+    }
+  }
+  return groups;
+}
+
+function RecordCard({
+  record,
+  isDark
+}: {
+  record: MonitoringRecord;
+  isDark: boolean;
+}) {
+  const statusColor = record.alarm_active
+    ? isDark
+      ? "#FFB4AB"
+      : "#BA1A1A"
+    : isDark
+      ? "#A5D6A7"
+      : "#2E7D32";
+
   return (
-    <Card modifiers={[fillMaxWidth(), paddingAll(16)]} elevation={record.alarm_active ? 2 : 0}>
-      <Column verticalArrangement={{ spacedBy: 8 }}>
+    <Card modifiers={[fillMaxWidth()]} elevation={record.alarm_active ? 2 : 0}>
+      <Column modifiers={[paddingAll(16)]} verticalArrangement={{ spacedBy: 10 }}>
         <Row horizontalArrangement="spaceBetween" verticalAlignment="center">
           <Column>
             <Text style={{ typography: "titleMedium", fontWeight: "600" }}>
@@ -37,12 +80,16 @@ function RecordCard({ record }: { record: MonitoringRecord }) {
             <Text style={{ typography: "bodySmall" }}>记录 #{record.id.slice(0, 8)}</Text>
           </Column>
           <Text
-            color={record.alarm_active ? "#BA1A1A" : "#2E7D32"}
+            color={statusColor}
             style={{ typography: "labelLarge", fontWeight: "700" }}
           >
             {record.alarm_active ? "● 报警" : "● 正常"}
           </Text>
         </Row>
+        <LinearProgressIndicator
+          progress={record.face_ratio / 100}
+          modifiers={[fillMaxWidth()]}
+        />
         <Row horizontalArrangement="spaceBetween">
           <Column>
             <Text style={{ typography: "bodySmall" }}>人脸可见度</Text>
@@ -64,8 +111,10 @@ function RecordCard({ record }: { record: MonitoringRecord }) {
 
 export function HistoryScreen() {
   const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
   const viewModel = useMonitoringHistoryViewModel();
   const { user, signOut } = useAuthViewModel();
+  const recordGroups = groupRecords(viewModel.records);
 
   return (
     <Host style={{ flex: 1 }} seedColor={BRAND_SEED} colorScheme={colorScheme}>
@@ -96,7 +145,7 @@ export function HistoryScreen() {
               <CircularWavyProgressIndicator />
               <Text>正在读取记录…</Text>
             </Column>
-          ) : viewModel.error ? (
+          ) : viewModel.error && viewModel.records.length === 0 ? (
             <Column
               modifiers={[fillMaxSize(), paddingAll(24)]}
               horizontalAlignment="center"
@@ -131,18 +180,98 @@ export function HistoryScreen() {
                 contentPadding={{ start: 16, top: 8, end: 16, bottom: 24 }}
                 verticalArrangement={{ spacedBy: 12 }}
               >
-                {viewModel.records.map((record) => (
-                  <RecordCard key={record.id} record={record} />
-                ))}
-                {viewModel.hasMore ? (
-                  <FilledTonalButton
-                    enabled={!viewModel.isLoadingMore}
-                    onClick={() => void viewModel.loadMore()}
-                    modifiers={[fillMaxWidth()]}
+                <Card modifiers={[fillMaxWidth()]} elevation={0}>
+                  <Column
+                    modifiers={[paddingAll(16)]}
+                    verticalArrangement={{ spacedBy: 10 }}
                   >
-                    <Text>{viewModel.isLoadingMore ? "正在加载…" : "加载更多"}</Text>
-                  </FilledTonalButton>
+                    <Text style={{ typography: "titleMedium", fontWeight: "600" }}>
+                      记录概览
+                    </Text>
+                    <Row horizontalArrangement="spaceBetween">
+                      <Column>
+                        <Text style={{ typography: "bodySmall" }}>全部记录</Text>
+                        <Text
+                          style={{ typography: "headlineSmall", fontWeight: "700" }}
+                        >
+                          {viewModel.total}
+                        </Text>
+                      </Column>
+                      <Column horizontalAlignment="center">
+                        <Text style={{ typography: "bodySmall" }}>当前载入</Text>
+                        <Text
+                          style={{ typography: "headlineSmall", fontWeight: "700" }}
+                        >
+                          {viewModel.records.length}
+                        </Text>
+                      </Column>
+                      <Column horizontalAlignment="end">
+                        <Text style={{ typography: "bodySmall" }}>载入报警</Text>
+                        <Text
+                          color={isDark ? "#FFB4AB" : "#BA1A1A"}
+                          style={{ typography: "headlineSmall", fontWeight: "700" }}
+                        >
+                          {viewModel.loadedAlarmCount}
+                        </Text>
+                      </Column>
+                    </Row>
+                  </Column>
+                </Card>
+                {viewModel.error ? (
+                  <Card modifiers={[fillMaxWidth()]} elevation={0}>
+                    <Column
+                      modifiers={[paddingAll(14)]}
+                      verticalArrangement={{ spacedBy: 6 }}
+                    >
+                      <Text color={isDark ? "#FFB4AB" : "#BA1A1A"}>
+                        {viewModel.error}
+                      </Text>
+                      <TextButton onClick={() => void viewModel.retry()}>
+                        <Text>重新加载</Text>
+                      </TextButton>
+                    </Column>
+                  </Card>
                 ) : null}
+                {recordGroups.flatMap((group) => [
+                  <Text
+                    key={`day-${group.key}`}
+                    style={{ typography: "titleSmall", fontWeight: "700" }}
+                  >
+                    {group.label}
+                  </Text>,
+                  ...group.records.map((record) => (
+                    <RecordCard key={record.id} record={record} isDark={isDark} />
+                  ))
+                ])}
+                {viewModel.hasMore ? (
+                  <Column verticalArrangement={{ spacedBy: 4 }}>
+                    {viewModel.loadMoreError ? (
+                      <Text
+                        color={isDark ? "#FFB4AB" : "#BA1A1A"}
+                        style={{ typography: "bodySmall", textAlign: "center" }}
+                      >
+                        {viewModel.loadMoreError}
+                      </Text>
+                    ) : null}
+                    <FilledTonalButton
+                      enabled={!viewModel.isLoadingMore}
+                      onClick={() => void viewModel.loadMore()}
+                      modifiers={[fillMaxWidth()]}
+                    >
+                      <Text>
+                        {viewModel.isLoadingMore
+                          ? "正在加载…"
+                          : viewModel.loadMoreError
+                            ? "重试加载更多"
+                            : "加载更多"}
+                      </Text>
+                    </FilledTonalButton>
+                  </Column>
+                ) : (
+                  <Text style={{ typography: "bodySmall", textAlign: "center" }}>
+                    已显示全部 {viewModel.records.length} 条记录
+                  </Text>
+                )}
               </LazyColumn>
             </PullToRefreshBox>
           )}
