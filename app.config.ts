@@ -10,6 +10,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: "SensorAya Baby",
   slug: "sensoraya-baby",
+  scheme: "sensoraya-baby",
   version: "1.0.0",
   orientation: "portrait",
   userInterfaceStyle: "automatic",
