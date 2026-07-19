@@ -5,8 +5,9 @@
   "main": "index.ts",
   "scripts": {
     "start": "expo start",
-    "android": "cd android && NODE_ENV=development ./gradlew app:installDebug --quiet --warning-mode none --no-configure-on-demand --no-problems-report && cd .. && EXPO_UNSTABLE_HEADLESS=1 expo start --dev-client --android --port 8081",
-    "android:warnings": "cd android && NODE_ENV=development ./gradlew app:assembleDebug --warning-mode all --no-configure-on-demand --no-problems-report --console plain",
+    "android": "cd android && env -u NO_COLOR -u FORCE_COLOR NODE_ENV=development ./gradlew app:installDebug --quiet --warning-mode none --no-configure-on-demand --no-problems-report && cd .. && env -u NO_COLOR -u FORCE_COLOR EXPO_UNSTABLE_HEADLESS=1 expo start --dev-client --android --port 8081",
+    "android:apk": "cd android && env -u NO_COLOR -u FORCE_COLOR NODE_ENV=production ./gradlew app:assembleRelease --quiet --warning-mode none --no-configure-on-demand --no-problems-report",
+    "android:warnings": "cd android && env -u NO_COLOR -u FORCE_COLOR NODE_ENV=development ./gradlew app:assembleDebug --warning-mode all --no-configure-on-demand --no-problems-report --console plain",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "verify:backend": "node --env-file=.env scripts/verify-backend.mjs"
