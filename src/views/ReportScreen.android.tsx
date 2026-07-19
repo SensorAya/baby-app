@@ -37,6 +37,7 @@ export function ReportScreen() {
             </Text>
             <SingleChoiceSegmentedButtonRow modifiers={[fillMaxWidth()]}>
               <SegmentedButton
+                enabled={!viewModel.isGenerating}
                 selected={viewModel.period === "weekly"}
                 onClick={() => viewModel.setPeriod("weekly")}
               >
@@ -45,6 +46,7 @@ export function ReportScreen() {
                 </SegmentedButton.Label>
               </SegmentedButton>
               <SegmentedButton
+                enabled={!viewModel.isGenerating}
                 selected={viewModel.period === "monthly"}
                 onClick={() => viewModel.setPeriod("monthly")}
               >
@@ -58,11 +60,20 @@ export function ReportScreen() {
               onClick={() => void viewModel.generate()}
               modifiers={[fillMaxWidth()]}
             >
-              <Text>{viewModel.isGenerating ? "正在分析监测数据…" : "生成报告"}</Text>
+              <Text>
+                {viewModel.isGenerating
+                  ? "正在分析监测数据…"
+                  : viewModel.report
+                    ? "重新生成报告"
+                    : "生成报告"}
+              </Text>
             </Button>
             {viewModel.isGenerating ? <CircularWavyProgressIndicator /> : null}
             {viewModel.error ? (
-              <Text color="#BA1A1A" style={{ typography: "bodyMedium" }}>
+              <Text
+                color={isDark ? "#FFB4AB" : "#BA1A1A"}
+                style={{ typography: "bodyMedium" }}
+              >
                 {viewModel.error}
               </Text>
             ) : null}

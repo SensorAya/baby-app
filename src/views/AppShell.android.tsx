@@ -20,7 +20,12 @@ export function AppShell() {
   return (
     <View style={styles.root}>
       <View style={styles.content}>
-        {tab === "history" ? <HistoryScreen /> : <ReportScreen />}
+        <View style={[styles.screen, tab !== "history" && styles.hidden]}>
+          <HistoryScreen />
+        </View>
+        <View style={[styles.screen, tab !== "report" && styles.hidden]}>
+          <ReportScreen />
+        </View>
       </View>
       <Host matchContents seedColor={BRAND_SEED} colorScheme={colorScheme}>
         <NavigationBar tonalElevation={3}>
@@ -42,5 +47,7 @@ export function AppShell() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  content: { flex: 1 }
+  content: { flex: 1 },
+  screen: { flex: 1 },
+  hidden: { display: "none" }
 });
