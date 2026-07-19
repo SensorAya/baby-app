@@ -3,6 +3,7 @@ import {
   Button,
   CircularWavyProgressIndicator,
   Column,
+  FilledTonalButton,
   Host,
   SegmentedButton,
   SingleChoiceSegmentedButtonRow,
@@ -25,10 +26,15 @@ export function ReportScreen() {
   const viewModel = useReportViewModel();
 
   return (
-    <View style={[styles.root, { backgroundColor: isDark ? "#141218" : "#FFFBFE" }]}>
+    <View
+      style={[styles.root, { backgroundColor: isDark ? "#141218" : "#FFFBFE" }]}
+    >
       <Host matchContents seedColor={BRAND_SEED} colorScheme={colorScheme}>
         <Surface modifiers={[fillMaxWidth()]}>
-          <Column modifiers={[padding(20, 20, 20, 16)]} verticalArrangement={{ spacedBy: 14 }}>
+          <Column
+            modifiers={[padding(20, 20, 20, 16)]}
+            verticalArrangement={{ spacedBy: 14 }}
+          >
             <Text style={{ typography: "headlineMedium", fontWeight: "700" }}>
               智能报告
             </Text>
@@ -78,9 +84,31 @@ export function ReportScreen() {
               </Text>
             ) : null}
             {viewModel.report ? (
-              <Text style={{ typography: "labelLarge" }}>
-                {formatDateRange(viewModel.report.start_at, viewModel.report.end_at)} · {viewModel.report.sample_count} 条样本
-              </Text>
+              <Column verticalArrangement={{ spacedBy: 8 }}>
+                <Text style={{ typography: "labelLarge" }}>
+                  {formatDateRange(
+                    viewModel.report.start_at,
+                    viewModel.report.end_at
+                  )} · {viewModel.report.sample_count} 条样本
+                </Text>
+                <FilledTonalButton
+                  enabled={!viewModel.isSharing}
+                  onClick={() => void viewModel.share()}
+                  modifiers={[fillMaxWidth()]}
+                >
+                  <Text>
+                    {viewModel.isSharing ? "正在打开分享面板…" : "分享报告"}
+                  </Text>
+                </FilledTonalButton>
+                {viewModel.shareError ? (
+                  <Text
+                    color={isDark ? "#FFB4AB" : "#BA1A1A"}
+                    style={{ typography: "bodySmall" }}
+                  >
+                    {viewModel.shareError}
+                  </Text>
+                ) : null}
+              </Column>
             ) : null}
           </Column>
         </Surface>

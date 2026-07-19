@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { MonitoringReport, ReportPeriod } from "../models/types";
 import { api, ApiError } from "../services/api";
+import { shareMonitoringReport } from "../services/reportSharing";
 import { useAuthViewModel } from "./AuthViewModel";
 
 export function useReportViewModel() {
@@ -9,17 +10,23 @@ export function useReportViewModel() {
   const [period, setPeriod] = useState<ReportPeriod>("weekly");
   const [report, setReport] = useState<MonitoringReport | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [shareError, setShareError] = useState<string | null>(null);
   const requestId = useRef(0);
   const generatingRequest = useRef<number | null>(null);
+  const sharing = useRef(false);
+  const mounted = useRef(true);
 
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
       requestId.current += 1;
       generatingRequest.current = null;
-    },
-    []
-  );
+      sharing.current = false;
+    };
+  }, []);
 
   const generate = useCallback(async () => {
     if (!token || generatingRequest.current !== null) return;
@@ -28,6 +35,7 @@ export function useReportViewModel() {
     generatingRequest.current = currentRequest;
     setIsGenerating(true);
     setError(null);
+    setShareError(null);
     try {
       const generatedReport = await api.generateReport(token, requestedPeriod);
       if (currentRequest !== requestId.current) return;
@@ -66,16 +74,37 @@ export function useReportViewModel() {
       setPeriod(nextPeriod);
       setReport(null);
       setError(null);
+      setShareError(null);
     },
     [period]
   );
+
+  const share = useCallback(async () => {
+    if (!report || sharing.current) return;
+    sharing.current = true;
+    setIsSharing(true);
+    setShareError(null);
+    try {
+      await shareMonitoringReport(report);
+    } catch {
+      if (mounted.current) {
+        setShareError("无法打开系统分享面板，请稍后重试");
+      }
+    } finally {
+      sharing.current = false;
+      if (mounted.current) setIsSharing(false);
+    }
+  }, [report]);
 
   return {
     period,
     report,
     isGenerating,
+    isSharing,
     error,
+    shareError,
     setPeriod: changePeriod,
-    generate
+    generate,
+    share
   };
 }
