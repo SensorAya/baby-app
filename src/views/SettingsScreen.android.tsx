@@ -125,7 +125,6 @@ export function SettingsScreen({ onBack }: SettingsScreenProps) {
                 <LazyRow
                   modifiers={[fillMaxWidth()]}
                   horizontalArrangement={{ spacedBy: 10 }}
-                  contentPadding={{ start: 20, end: 8 }}
                   verticalAlignment="center"
                 >
                   {ACCENT_COLORS.map((option) => {
