@@ -43,6 +43,30 @@ if (!history.response.ok || !Array.isArray(history.payload?.items)) {
   process.exitCode = 1;
 }
 
+const openapi = await call("openapi", "/openapi.json");
+const monitoringSchema =
+  openapi.payload?.components?.schemas?.MonitoringRecordResponse;
+const requiredMonitoringFields = new Set(monitoringSchema?.required ?? []);
+const babyMetricFields = ["baby_center_x", "baby_center_y", "baby_ratio"];
+const missingBabyMetricFields = babyMetricFields.filter(
+  (field) => !requiredMonitoringFields.has(field)
+);
+
+if (!openapi.response.ok || missingBabyMetricFields.length > 0) {
+  console.error(
+    `Monitoring contract is missing required fields: ${missingBabyMetricFields.join(", ")}`
+  );
+  process.exitCode = 1;
+}
+
+const invalidHistoryItem = history.payload?.items?.find((item) =>
+  babyMetricFields.some((field) => typeof item?.[field] !== "number")
+);
+if (invalidHistoryItem) {
+  console.error("Monitoring history returned invalid baby detection metrics");
+  process.exitCode = 1;
+}
+
 if (process.env.VERIFY_REPORT === "1") {
   const report = await call("weekly report", "/api/reports", {
     method: "POST",

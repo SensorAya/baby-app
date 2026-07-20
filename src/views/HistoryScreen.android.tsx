@@ -94,21 +94,38 @@ function RecordCard({
             {record.alarm_active ? "● 报警" : "● 正常"}
           </Text>
         </Row>
-        <LinearProgressIndicator
-          progress={record.face_ratio / 100}
+        <Row
           modifiers={[fillMaxWidth()]}
-        />
-        <Row horizontalArrangement="spaceBetween">
-          <Column>
-            <Text style={{ typography: "bodySmall" }}>人脸可见度</Text>
+          horizontalArrangement={{ spacedBy: 16 }}
+        >
+          <Column modifiers={[weight(1)]} verticalArrangement={{ spacedBy: 6 }}>
+            <Text style={{ typography: "bodySmall" }}>宝宝画面占比</Text>
+            <Text style={{ typography: "headlineSmall", fontWeight: "700" }}>
+              {record.baby_ratio}%
+            </Text>
+            <LinearProgressIndicator
+              progress={record.baby_ratio / 100}
+              modifiers={[fillMaxWidth()]}
+            />
+            <Text style={{ typography: "bodySmall" }}>
+              中心 {record.baby_center_x}, {record.baby_center_y}
+            </Text>
+          </Column>
+          <Column
+            modifiers={[weight(1)]}
+            horizontalAlignment="end"
+            verticalArrangement={{ spacedBy: 6 }}
+          >
+            <Text style={{ typography: "bodySmall" }}>人脸画面占比</Text>
             <Text style={{ typography: "headlineSmall", fontWeight: "700" }}>
               {record.face_ratio}%
             </Text>
-          </Column>
-          <Column horizontalAlignment="end">
-            <Text style={{ typography: "bodySmall" }}>画面中心</Text>
-            <Text style={{ typography: "titleMedium" }}>
-              {record.face_center_x}, {record.face_center_y}
+            <LinearProgressIndicator
+              progress={record.face_ratio / 100}
+              modifiers={[fillMaxWidth()]}
+            />
+            <Text style={{ typography: "bodySmall" }}>
+              中心 {record.face_center_x}, {record.face_center_y}
             </Text>
           </Column>
         </Row>

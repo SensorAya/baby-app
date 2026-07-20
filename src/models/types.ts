@@ -18,6 +18,9 @@ export type MonitoringRecord = {
   face_center_x: number;
   face_center_y: number;
   alarm_active: boolean;
+  baby_center_x: number;
+  baby_center_y: number;
+  baby_ratio: number;
   created_at: string;
 };
 
