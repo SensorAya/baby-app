@@ -9,9 +9,12 @@ const dateFormatter = new Intl.DateTimeFormat("zh-TW", {
 });
 
 function reportTitle(report: MonitoringReport): string {
-  return report.period === "weekly"
-    ? "SensorAya 婴儿监控周报"
-    : "SensorAya 婴儿监控月报";
+  return {
+    session: "SensorAya 婴儿单次监测报告",
+    daily: "SensorAya 婴儿监控日报",
+    weekly: "SensorAya 婴儿监控周报",
+    monthly: "SensorAya 婴儿监控月报"
+  }[report.period];
 }
 
 export async function shareMonitoringReport(
@@ -30,6 +33,6 @@ export async function shareMonitoringReport(
 
   await Share.share(
     { title, message },
-    { dialogTitle: `分享${report.period === "weekly" ? "周报" : "月报"}` }
+    { dialogTitle: `分享${title.replace("SensorAya 婴儿", "")}` }
   );
 }

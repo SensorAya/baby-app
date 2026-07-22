@@ -5,8 +5,9 @@
 ## 功能
 
 - 使用永久 Bearer Token 登录，凭证由 `expo-secure-store` 加密保存
-- 分页查看当前用户的 monitoring 历史，支持下拉刷新
-- 生成 7 天周报或 30 天月报，并阅读 Markdown 报告
+- 按完整监测、天、周、月分页查看 monitoring 聚合历史
+- 生成单次、日报、7 天周报或 30 天月报，并阅读 Markdown 报告
+- 通过鉴权 WebSocket 接收实时报警，显示系统通知并持续震动到 dismiss
 - Material You 配色、系统浅色/深色模式和边到边布局
 
 ## 配置

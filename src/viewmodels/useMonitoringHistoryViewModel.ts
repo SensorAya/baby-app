@@ -1,26 +1,29 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import type { MonitoringRecord } from "../models/types";
+import type {
+  MonitoringPeriod,
+  MonitoringSessionSummary
+} from "../models/types";
 import { api, ApiError } from "../services/api";
 import { useAuthViewModel } from "./AuthViewModel";
 
 const PAGE_SIZE = 20;
 
-function mergeRecords(
-  current: MonitoringRecord[],
-  incoming: MonitoringRecord[]
-): MonitoringRecord[] {
-  const recordsById = new Map(current.map((record) => [record.id, record]));
-  for (const record of incoming) recordsById.set(record.id, record);
-  return [...recordsById.values()].sort(
-    (left, right) =>
-      right.timestamp - left.timestamp || right.id.localeCompare(left.id)
+function mergeItems(
+  current: MonitoringSessionSummary[],
+  incoming: MonitoringSessionSummary[]
+): MonitoringSessionSummary[] {
+  const itemsByKey = new Map(current.map((item) => [item.key, item]));
+  for (const item of incoming) itemsByKey.set(item.key, item);
+  return [...itemsByKey.values()].sort(
+    (left, right) => right.ended_at - left.ended_at || right.key.localeCompare(left.key)
   );
 }
 
 export function useMonitoringHistoryViewModel() {
   const { token, signOut } = useAuthViewModel();
-  const [records, setRecords] = useState<MonitoringRecord[]>([]);
+  const [period, setPeriod] = useState<MonitoringPeriod>("session");
+  const [items, setItems] = useState<MonitoringSessionSummary[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);
   const [pages, setPages] = useState(0);
@@ -48,10 +51,15 @@ export function useMonitoringHistoryViewModel() {
       }
 
       try {
-        const result = await api.getMonitoringHistory(token, nextPage, PAGE_SIZE);
+        const result = await api.getMonitoringHistory(
+          token,
+          period,
+          nextPage,
+          PAGE_SIZE
+        );
         if (currentRequest !== requestId.current) return;
-        setRecords((current) =>
-          mode === "more" ? mergeRecords(current, result.items) : result.items
+        setItems((current) =>
+          mode === "more" ? mergeItems(current, result.items) : result.items
         );
         setTotal(result.total);
         setPage(result.page);
@@ -63,7 +71,7 @@ export function useMonitoringHistoryViewModel() {
           return;
         }
         const message =
-          loadError instanceof Error ? loadError.message : "读取历史记录失败";
+          loadError instanceof Error ? loadError.message : "读取监测历史失败";
         if (mode === "more") setLoadMoreError(message);
         else setError(message);
       } finally {
@@ -75,7 +83,7 @@ export function useMonitoringHistoryViewModel() {
         }
       }
     },
-    [signOut, token]
+    [period, signOut, token]
   );
 
   useEffect(() => {
@@ -85,27 +93,31 @@ export function useMonitoringHistoryViewModel() {
     };
   }, [loadPage, token]);
 
+  const changePeriod = useCallback((nextPeriod: MonitoringPeriod) => {
+    requestId.current += 1;
+    setPeriod(nextPeriod);
+    setItems([]);
+    setTotal(0);
+    setPage(0);
+    setPages(0);
+  }, []);
   const refresh = useCallback(() => loadPage(1, "refresh"), [loadPage]);
   const loadMore = useCallback(() => {
     if (!loadingMore.current && page < pages) return loadPage(page + 1, "more");
     return Promise.resolve();
   }, [loadPage, page, pages]);
 
-  const loadedAlarmCount = records.reduce(
-    (count, record) => count + (record.alarm_active ? 1 : 0),
-    0
-  );
-
   return {
-    records,
+    period,
+    items,
     total,
-    loadedAlarmCount,
     isLoading,
     isRefreshing,
     isLoadingMore,
     hasMore: page < pages,
     error,
     loadMoreError,
+    setPeriod: changePeriod,
     refresh,
     loadMore,
     retry: () => loadPage(1, "initial")

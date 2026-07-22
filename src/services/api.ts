@@ -1,7 +1,9 @@
 import Constants from "expo-constants";
 
 import type {
+  AlarmState,
   MonitoringHistory,
+  MonitoringPeriod,
   MonitoringReport,
   ReportPeriod,
   TokenVerification
@@ -75,14 +77,26 @@ async function request<T>(
 export const api = {
   verifyToken: (token: string) =>
     request<TokenVerification>("/api/verify-token", token),
-  getMonitoringHistory: (token: string, page: number, pageSize = 20) =>
+  getMonitoringHistory: (
+    token: string,
+    period: MonitoringPeriod,
+    page: number,
+    pageSize = 20
+  ) =>
     request<MonitoringHistory>(
-      `/api/monitoring/history?page=${page}&page_size=${pageSize}`,
+      `/api/monitoring/history?period=${period}&page=${page}&page_size=${pageSize}`,
       token
     ),
+  getActiveAlarm: (token: string) =>
+    request<AlarmState>("/api/alarms/active", token),
   generateReport: (token: string, period: ReportPeriod) =>
     request<MonitoringReport>("/api/reports", token, {
       method: "POST",
       body: JSON.stringify({ period })
     }, 120_000)
 };
+
+export function createAlarmWebSocket(token: string): WebSocket {
+  const websocketUrl = `${API_URL.replace(/^http/i, "ws")}/api/alarms/ws`;
+  return new WebSocket(websocketUrl, ["bearer", token]);
+}

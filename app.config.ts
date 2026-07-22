@@ -29,6 +29,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   plugins: [
     "expo-secure-store",
+    "expo-notifications",
     ["expo-navigation-bar", { enforceContrast: false }],
     [
       "expo-build-properties",

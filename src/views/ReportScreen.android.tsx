@@ -48,26 +48,42 @@ export function ReportScreen() {
               智能报告
             </Text>
             <Text style={{ typography: "bodyMedium" }}>
-              根据近期监测数据生成严谨的中文分析。
+              按完整监测、天、周或月生成严谨的中文分析。
             </Text>
+            <SingleChoiceSegmentedButtonRow modifiers={[fillMaxWidth()]}>
+              <SegmentedButton
+                enabled={!viewModel.isGenerating}
+                selected={viewModel.period === "session"}
+                onClick={() => viewModel.setPeriod("session")}
+              >
+                <SegmentedButton.Label>
+                  <Text>单次</Text>
+                </SegmentedButton.Label>
+              </SegmentedButton>
+              <SegmentedButton
+                enabled={!viewModel.isGenerating}
+                selected={viewModel.period === "daily"}
+                onClick={() => viewModel.setPeriod("daily")}
+              >
+                <SegmentedButton.Label>
+                  <Text>日报</Text>
+                </SegmentedButton.Label>
+              </SegmentedButton>
+            </SingleChoiceSegmentedButtonRow>
             <SingleChoiceSegmentedButtonRow modifiers={[fillMaxWidth()]}>
               <SegmentedButton
                 enabled={!viewModel.isGenerating}
                 selected={viewModel.period === "weekly"}
                 onClick={() => viewModel.setPeriod("weekly")}
               >
-                <SegmentedButton.Label>
-                  <Text>周报 · 7 天</Text>
-                </SegmentedButton.Label>
+                <SegmentedButton.Label><Text>周报 · 7 天</Text></SegmentedButton.Label>
               </SegmentedButton>
               <SegmentedButton
                 enabled={!viewModel.isGenerating}
                 selected={viewModel.period === "monthly"}
                 onClick={() => viewModel.setPeriod("monthly")}
               >
-                <SegmentedButton.Label>
-                  <Text>月报 · 30 天</Text>
-                </SegmentedButton.Label>
+                <SegmentedButton.Label><Text>月报 · 30 天</Text></SegmentedButton.Label>
               </SegmentedButton>
             </SingleChoiceSegmentedButtonRow>
             <Button

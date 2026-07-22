@@ -10,6 +10,8 @@ import {
 import { fillMaxWidth, size } from "@expo/ui/jetpack-compose/modifiers";
 
 import { useSettingsViewModel } from "../viewmodels/SettingsViewModel";
+import { useAlarmViewModel } from "../viewmodels/AlarmViewModel";
+import { AlarmBanner } from "./AlarmBanner.android";
 import { HistoryScreen } from "./HistoryScreen.android";
 import { ReportScreen } from "./ReportScreen.android";
 import { SettingsScreen } from "./SettingsScreen.android";
@@ -21,6 +23,7 @@ export function AppShell() {
   const [tab, setTab] = useState<Tab>("history");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const { accentSeed } = useSettingsViewModel();
+  const alarmViewModel = useAlarmViewModel();
 
   return (
     <View style={styles.root}>
@@ -45,6 +48,9 @@ export function AppShell() {
           <SettingsScreen onBack={() => setSettingsOpen(false)} />
         </View>
       </View>
+      {alarmViewModel.active && !alarmViewModel.dismissed && alarmViewModel.alarm ? (
+        <AlarmBanner alarm={alarmViewModel.alarm} onDismiss={alarmViewModel.dismiss} />
+      ) : null}
       {settingsOpen ? null : (
         <Host
           matchContents={{ vertical: true }}

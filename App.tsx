@@ -8,6 +8,7 @@ import {
   useAuthViewModel
 } from "./src/viewmodels/AuthViewModel";
 import { SettingsViewModelProvider } from "./src/viewmodels/SettingsViewModel";
+import { AlarmViewModelProvider } from "./src/viewmodels/AlarmViewModel";
 import { AppShell } from "./src/views/AppShell.android";
 import { LoadingScreen } from "./src/views/LoadingScreen.android";
 import { LoginScreen } from "./src/views/LoginScreen.android";
@@ -33,7 +34,9 @@ function AppContent() {
           onUseAnotherToken={() => void signOut()}
         />
       ) : status === "signedIn" ? (
-        <AppShell />
+        <AlarmViewModelProvider>
+          <AppShell />
+        </AlarmViewModelProvider>
       ) : (
         <LoginScreen />
       )}

@@ -37,7 +37,10 @@ if (!verification.response.ok || !verification.payload?.user?.id) {
   process.exit(1);
 }
 
-const history = await call("history", "/api/monitoring/history?page=1&page_size=2");
+const history = await call(
+  "history",
+  "/api/monitoring/history?period=session&page=1&page_size=2"
+);
 if (!history.response.ok || !Array.isArray(history.payload?.items)) {
   console.error("Monitoring history endpoint is not available on this backend");
   process.exitCode = 1;
@@ -47,23 +50,38 @@ const openapi = await call("openapi", "/openapi.json");
 const monitoringSchema =
   openapi.payload?.components?.schemas?.MonitoringRecordResponse;
 const requiredMonitoringFields = new Set(monitoringSchema?.required ?? []);
-const babyMetricFields = ["baby_center_x", "baby_center_y", "baby_ratio"];
-const missingBabyMetricFields = babyMetricFields.filter(
+const heartbeatFields = [
+  "event",
+  "baby_center_x",
+  "baby_center_y",
+  "baby_ratio",
+  "activity_level",
+  "session_id"
+];
+const missingHeartbeatFields = heartbeatFields.filter(
   (field) => !requiredMonitoringFields.has(field)
 );
 
-if (!openapi.response.ok || missingBabyMetricFields.length > 0) {
+if (!openapi.response.ok || missingHeartbeatFields.length > 0) {
   console.error(
-    `Monitoring contract is missing required fields: ${missingBabyMetricFields.join(", ")}`
+    `Monitoring contract is missing required fields: ${missingHeartbeatFields.join(", ")}`
   );
   process.exitCode = 1;
 }
 
 const invalidHistoryItem = history.payload?.items?.find((item) =>
-  babyMetricFields.some((field) => typeof item?.[field] !== "number")
+  ["session_count", "sample_count", "duration_seconds"].some(
+    (field) => typeof item?.[field] !== "number"
+  )
 );
 if (invalidHistoryItem) {
-  console.error("Monitoring history returned invalid baby detection metrics");
+  console.error("Monitoring history returned an invalid session aggregate");
+  process.exitCode = 1;
+}
+
+const alarms = await call("alarm state", "/api/alarms/active");
+if (!alarms.response.ok || typeof alarms.payload?.active !== "boolean") {
+  console.error("Alarm state endpoint is not available on this backend");
   process.exitCode = 1;
 }
 

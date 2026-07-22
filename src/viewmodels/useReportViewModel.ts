@@ -7,7 +7,7 @@ import { useAuthViewModel } from "./AuthViewModel";
 
 export function useReportViewModel() {
   const { token, signOut } = useAuthViewModel();
-  const [period, setPeriod] = useState<ReportPeriod>("weekly");
+  const [period, setPeriod] = useState<ReportPeriod>("session");
   const [report, setReport] = useState<MonitoringReport | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
@@ -47,9 +47,13 @@ export function useReportViewModel() {
         return;
       }
       if (generateError instanceof ApiError && generateError.status === 404) {
-        setError(
-          `最近${requestedPeriod === "weekly" ? " 7 " : " 30 "}天没有监测数据`
-        );
+        const labels: Record<ReportPeriod, string> = {
+          session: "最近没有完整监测",
+          daily: "今天没有完整监测",
+          weekly: "最近 7 天没有完整监测",
+          monthly: "最近 30 天没有完整监测"
+        };
+        setError(labels[requestedPeriod]);
       } else if (generateError instanceof ApiError && generateError.status === 502) {
         setError("报告服务暂时不可用，请稍后重试");
       } else {
