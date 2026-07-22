@@ -15,7 +15,9 @@ import type { AlarmEvent, AlarmStreamMessage } from "../models/types";
 import { api, createAlarmWebSocket } from "../services/api";
 import { useAuthViewModel } from "./AuthViewModel";
 
-const ALARM_CHANNEL = "sensoraya-alarm";
+// Version the channel so devices that created the old invalid custom-sound
+// channel receive a fresh channel backed by Android's default sound.
+const ALARM_CHANNEL = "sensoraya-alarm-v2";
 const ALARM_CATEGORY = "sensoraya-alarm-actions";
 const DISMISS_ACTION = "dismiss-alarm";
 
@@ -123,8 +125,7 @@ export function AlarmViewModelProvider({ children }: PropsWithChildren) {
           name: "婴儿监控报警",
           importance: Notifications.AndroidImportance.MAX,
           vibrationPattern: [0, 900, 450, 900],
-          enableVibrate: true,
-          sound: "default"
+          enableVibrate: true
         });
       }
       await Notifications.setNotificationCategoryAsync(ALARM_CATEGORY, [

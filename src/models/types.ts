@@ -41,6 +41,18 @@ export type MonitoringHistory = {
 
 export type ReportPeriod = MonitoringPeriod;
 
+export type CalendarReportPeriod = Exclude<ReportPeriod, "session">;
+
+export type ReportQuery =
+  | {
+      period: "session";
+      sessionId: string;
+    }
+  | {
+      period: CalendarReportPeriod;
+      anchorDate: string;
+    };
+
 export type MonitoringReport = {
   period: ReportPeriod;
   days: number;
@@ -49,6 +61,14 @@ export type MonitoringReport = {
   sample_count: number;
   session_id: string | null;
   report: string;
+};
+
+export type SavedMonitoringReport = {
+  cacheKey: string;
+  userId: string;
+  savedAt: string;
+  query: ReportQuery;
+  report: MonitoringReport;
 };
 
 export type AlarmTransition = "triggered" | "cleared";

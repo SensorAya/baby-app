@@ -5,7 +5,7 @@ import type {
   MonitoringHistory,
   MonitoringPeriod,
   MonitoringReport,
-  ReportPeriod,
+  ReportQuery,
   TokenVerification
 } from "../models/types";
 
@@ -89,10 +89,13 @@ export const api = {
     ),
   getActiveAlarm: (token: string) =>
     request<AlarmState>("/api/alarms/active", token),
-  generateReport: (token: string, period: ReportPeriod) =>
+  generateReport: (token: string, query: ReportQuery) =>
     request<MonitoringReport>("/api/reports", token, {
       method: "POST",
-      body: JSON.stringify({ period })
+      body: JSON.stringify({
+        period: query.period,
+        ...(query.period === "session" ? { session_id: query.sessionId } : {})
+      })
     }, 120_000)
 };
 

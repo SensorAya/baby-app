@@ -12,5 +12,6 @@ web-build/
 npm-debug.log*
 *.jks
 *.keystore
-android/
-ios/
+/android/
+/ios/
+modules/**/android/build/
