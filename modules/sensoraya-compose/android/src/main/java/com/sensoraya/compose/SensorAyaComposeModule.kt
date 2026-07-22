@@ -91,7 +91,39 @@ private fun rgbaHexToColor(value: String, fallback: Color): Color {
 class SensorAyaComposeModule : Module() {
   private var predictiveBackEnabled = false
   private var predictiveBackCallback: OnBackPressedCallback? = null
+  private var reactNativeBackCallback: OnBackPressedCallback? = null
   private var attachedActivity: ComponentActivity? = null
+
+  private fun findReactNativeBackCallback(
+    activity: ComponentActivity,
+  ): OnBackPressedCallback? {
+    var type: Class<*>? = activity.javaClass
+    while (type != null) {
+      val callback = type.declaredFields.firstNotNullOfOrNull { field ->
+        if (!OnBackPressedCallback::class.java.isAssignableFrom(field.type)) {
+          return@firstNotNullOfOrNull null
+        }
+        runCatching {
+          field.isAccessible = true
+          field.get(activity) as? OnBackPressedCallback
+        }.getOrNull()
+      }
+      if (callback != null) return callback
+      type = type.superclass
+    }
+    return null
+  }
+
+  private fun setReactNativeBackEnabled(
+    activity: ComponentActivity,
+    enabled: Boolean,
+  ) {
+    val callback = reactNativeBackCallback
+      ?: findReactNativeBackCallback(activity)?.also {
+        reactNativeBackCallback = it
+      }
+    callback?.isEnabled = enabled
+  }
 
   private fun emitPredictiveBack(
     phase: String,
@@ -111,11 +143,14 @@ class SensorAyaComposeModule : Module() {
   private fun attachPredictiveBackCallback() {
     val activity = appContext.currentActivity as? ComponentActivity ?: return
     if (attachedActivity === activity && predictiveBackCallback != null) {
+      setReactNativeBackEnabled(activity, predictiveBackEnabled)
       predictiveBackCallback?.isEnabled = predictiveBackEnabled
       return
     }
 
     predictiveBackCallback?.remove()
+    reactNativeBackCallback = null
+    setReactNativeBackEnabled(activity, predictiveBackEnabled)
     val callback = object : OnBackPressedCallback(predictiveBackEnabled) {
       override fun handleOnBackStarted(backEvent: BackEventCompat) {
         emitPredictiveBack("started", backEvent.progress, backEvent.swipeEdge)
@@ -141,7 +176,19 @@ class SensorAyaComposeModule : Module() {
   private fun detachPredictiveBackCallback() {
     predictiveBackCallback?.remove()
     predictiveBackCallback = null
+    reactNativeBackCallback = null
     attachedActivity = null
+  }
+
+  private fun updateBackStackState(hasInAppDestination: Boolean) {
+    predictiveBackEnabled = hasInAppDestination
+    val activity = appContext.currentActivity as? ComponentActivity ?: return
+    setReactNativeBackEnabled(activity, hasInAppDestination)
+    if (hasInAppDestination) {
+      attachPredictiveBackCallback()
+    } else {
+      predictiveBackCallback?.isEnabled = false
+    }
   }
 
   override fun definition() = ModuleDefinition {
@@ -153,18 +200,11 @@ class SensorAyaComposeModule : Module() {
     }
 
     AsyncFunction("setPredictiveBackEnabled") { enabled: Boolean ->
-      predictiveBackEnabled = enabled
-      if (enabled) {
-        attachPredictiveBackCallback()
-      } else {
-        predictiveBackCallback?.isEnabled = false
-      }
+      updateBackStackState(enabled)
     }.runOnQueue(Queues.MAIN)
 
     OnActivityEntersForeground {
-      if (predictiveBackEnabled) {
-        attachPredictiveBackCallback()
-      }
+      updateBackStackState(predictiveBackEnabled)
     }
 
     OnActivityDestroys {
