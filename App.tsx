@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { useColorScheme } from "react-native";
 import { StatusBar } from "expo-status-bar";
@@ -9,6 +10,7 @@ import {
 } from "./src/viewmodels/AuthViewModel";
 import { SettingsViewModelProvider } from "./src/viewmodels/SettingsViewModel";
 import { AlarmViewModelProvider } from "./src/viewmodels/AlarmViewModel";
+import { predictiveBack } from "./src/services/predictiveBack.android";
 import { AppShell } from "./src/views/AppShell.android";
 import { LoadingScreen } from "./src/views/LoadingScreen.android";
 import { LoginScreen } from "./src/views/LoginScreen.android";
@@ -17,6 +19,15 @@ function AppContent() {
   const { status, error, retryRestore, signOut } = useAuthViewModel();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
+
+  useEffect(() => {
+    if (status === "signedIn" || !predictiveBack.setPredictiveBackEnabled) {
+      return;
+    }
+    void predictiveBack.setPredictiveBackEnabled(false).catch(() => {
+      // Android's regular Activity back behavior remains the fallback.
+    });
+  }, [status]);
 
   return (
     <SafeAreaView
